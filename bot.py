@@ -5,8 +5,8 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 
-# ضع توكن البوت الحقيقي هنا مباشرة بين علامات التنصيص لإنهاء مشاكل الـ InvalidToken
-TOKEN = "ضع_توكن_بوتك_هنا"
+# قراءة التوكن تلقائياً من المتغيرات في لوحة تحكم Railway
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("BOT_TOKEN")
 
 WELCOME_VIDEO = os.getenv("WELCOME_VIDEO")
 DEV_VIDEO = os.getenv("DEV_VIDEO")
@@ -19,7 +19,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "✨ تصفح ممتع نتمناه لك!"
     )
     
-    # روابط مباشرة وصريحة 100% تمنع ظهور الروابط الناقصة
+    # أزرار تفاعلية وروابط مباشرة تفتح داخل التطبيق فوراً
     keyboard = [
         [
             InlineKeyboardButton("📜 Y.S", callback_data="ys_list"),
@@ -30,7 +30,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             InlineKeyboardButton("🛠️ الدعم", url="https://t.me")
         ],
         [
-            # ربط مباشر وصحيح لبوت ريتاج يفتحه داخل التطبيق فوراً
             InlineKeyboardButton("👑 ريتاج", url="https://t.me")
         ]
     ]
@@ -48,7 +47,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await query.answer()
 
     if query.data == "ys_list":
-        # كتابة القنوات مباشرة داخل الكود لضمان عدم تعليق السيرفر في القراءة
+        # قنوات شبكة Y.S مرتبة ومنسقة كأزرار حقيقية تفاعلية
         channels = [
             "@EmpireBoosts", "@ShadowNums", "@iconvx_pro", "@wrdxix", "@cvipx", 
             "@DesignArsenalAssets", "@shaheen_fot", "@DesignArsenalApps", "@DesignArsenalPacks", 
@@ -92,11 +91,17 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             pass
 
 def main():
+    if not TOKEN:
+        print("❌ خطأ: التوكن غير موجود في متغيرات Railway!")
+        return
+
     application = Application.builder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button_click))
+    
+    print("🚀 البوت جاهز ويعمل بالمتغيرات السحابية...")
     application.run_polling(close_loop=False)
 
 if __name__ == "__main__":
     main()
-    
+        
