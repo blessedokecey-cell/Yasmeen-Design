@@ -93,13 +93,19 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await query.message.reply_text(text=support_text, parse_mode="Markdown")
 
 def main():
+    # بناء التطبيق باستخدام التوكن من متغيرات البيئة
     application = Application.builder().token(TOKEN).build()
+    
+    # تسجيل الأوامر والضغطات
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button_click))
     
     print("البوت ياسمين جاهز ويعمل الآن بنظام 5 أزرار عصرية...")
-    application.run_polling()
+    
+    # التعديل هنا: استخدام دالة التحديث النظيف لمنع تعليق السيرفر
+    application.run_polling(close_loop=False)
 
 if __name__ == "__main__":
     main()
+
   
