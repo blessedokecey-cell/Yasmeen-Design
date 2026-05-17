@@ -11,7 +11,7 @@ load_dotenv()
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 
 # جلب البيانات من متغيرات البيئة
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")  # تم تحديثه ليتوافق مع Railway لديك
 WELCOME_VIDEO = os.getenv("WELCOME_VIDEO")
 DEV_VIDEO = os.getenv("DEV_VIDEO")
 DEV_USER = os.getenv("DEVELOPER_USER")
@@ -28,7 +28,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "✨ تصفح ممتع نتمناه لك!"
     )
     
-    # تصميم الأزرار العصري والمتناسق هندسياً (2 في الصف الأول، 2 في الثاني، وزر ريتاج المميز في الأسفل)
+    # القائمة الرئيسية للأزرار
     keyboard = [
         [
             InlineKeyboardButton("📜 Y.S", callback_data="ys_list"),
@@ -39,13 +39,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             InlineKeyboardButton("🛠️ الدعم", callback_data="support_info")
         ],
         [
-            # زر ريتاج ينقل المستخدم مباشرة إلى البوت الآخر عند الضغط عليه
             InlineKeyboardButton("👑 ريتاج", url="https://t.me")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    # إرسال فيديو الترحيب وتحته الأزرار الخمسة مباشرة
     await update.message.reply_video(
         video=WELCOME_VIDEO,
         caption=welcome_text,
@@ -59,12 +57,30 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await query.answer()
 
     if query.data == "ys_list":
-        # تقسيم قائمة القنوات وعرضها مرقمة بالترتيب
+        # جلب القنوات وتقسيمها
         channels = [ch.strip() for ch in YS_CH.split(",")]
-        ys_text = "📜 **قائمة القنوات التابعة لنا بالترتيب:**\n\n"
-        for index, ch in enumerate(channels, start=1):
-            ys_text += f"{index}. {ch}\n"
-        await query.message.reply_text(text=ys_text, parse_mode="Markdown")
+        
+        # تحويل القنوات إلى أزرار تفاعلية تنقل المستخدم مباشرة عند الضغط عليها
+        ys_buttons = []
+        for ch in channels:
+            # تنظيف اليوزر وتجهيز رابط تليجرام المباشر له t.me
+            clean_ch = ch.replace("@", "")
+            ys_buttons.append(InlineKeyboardButton(text=f"📢 {ch}", url=f"https://t.me{clean_ch}"))
+        
+        # ترتيب الأزرار في صفوف (كل سطر يحتوي على زرين ليكون المظهر منسقاً وعصرياً)
+        ys_keyboard = [ys_buttons[i:i + 2] for i in range(0, len(ys_buttons), 2)]
+        
+        # إضافة زر للعودة للقائمة الرئيسية في نهاية قنوات Y.S (اختياري لراحة المستخدم)
+        ys_keyboard.append([InlineKeyboardButton("🔙 العودة للقائمة الرئيسية", callback_data="back_to_main")])
+        
+        ys_markup = InlineKeyboardMarkup(ys_keyboard)
+        
+        # إرسال رسالة الأزرار الجديدة
+        await query.message.reply_text(
+            text="📜 **قائمة القنوات التابعة لنا بالترتيب:**\nاضغط على أي زر للانتقال مباشرة إلى القناة:",
+            reply_markup=ys_markup,
+            parse_mode="Markdown"
+        )
         
     elif query.data == "trend_info":
         trend_text = (
@@ -78,7 +94,6 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             "👨‍💻 **البطاقة التعريفية لمطور البوت**\n\n"
             f"للتواصل، الاستفسار، أو طلب تطوير بوتات خاصة، يمكنك مراسلة المطور عبر حسابه:\n👉 {DEV_USER}"
         )
-        # إرسال فيديو هوية المطور مع النص
         await query.message.reply_video(
             video=DEV_VIDEO,
             caption=dev_text,
@@ -92,20 +107,18 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
         await query.message.reply_text(text=support_text, parse_mode="Markdown")
 
+    elif query.data == "back_to_main":
+        # حذف رسالة القنوات عند الضغط على زر العودة لتنظيف المحادثة
+        await query.message.delete()
+
 def main():
-    # بناء التطبيق باستخدام التوكن من متغيرات البيئة
     application = Application.builder().token(TOKEN).build()
-    
-    # تسجيل الأوامر والضغطات
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button_click))
     
-    print("البوت ياسمين جاهز ويعمل الآن بنظام 5 أزرار عصرية...")
-    
-    # التعديل هنا: استخدام دالة التحديث النظيف لمنع تعليق السيرفر
+    print("البوت ياسمين جاهز ويعمل الآن بنظام الأزرار العصري الشفاف...")
     application.run_polling(close_loop=False)
 
 if __name__ == "__main__":
     main()
-
-  
+    
