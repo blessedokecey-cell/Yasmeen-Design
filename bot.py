@@ -3,14 +3,17 @@ import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
+# تفعيل تسجيل الأخطاء البرمجية
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 
-# قراءة التوكن تلقائياً من المتغيرات في لوحة تحكم Railway
+# قراءة التوكن من متغيرات Railway
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("BOT_TOKEN")
 
+# جلب روابط الفيديوهات من المتغيرات
 WELCOME_VIDEO = os.getenv("WELCOME_VIDEO")
 DEV_VIDEO = os.getenv("DEV_VIDEO")
 
+# دالة الترحيب الأساسية /start عند تشغيل البوت
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
         "🌸 **مرحباً بك في بوت ياسمين الرسمي** 🌸\n\n"
@@ -19,18 +22,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "✨ تصفح ممتع نتمناه لك!"
     )
     
-    # أزرار تفاعلية وروابط مباشرة تفتح داخل التطبيق فوراً
+    # [تحديث هام] جميع الأزرار أصبحت تفاعلية داخلية (callback_data) بدون أي روابط خارجية
     keyboard = [
         [
             InlineKeyboardButton("📜 Y.S", callback_data="ys_list"),
-            InlineKeyboardButton("🏆 تـرنـد²⁰²٧", url="https://t.me")
+            InlineKeyboardButton("🏆 تـرنـد²⁰²٧", callback_data="trend_info")
         ],
         [
             InlineKeyboardButton("👨‍💻 المطور", callback_data="dev_info"),
-            InlineKeyboardButton("🛠️ الدعم", url="https://t.me")
+            InlineKeyboardButton("🛠️ الدعم", callback_data="support_info")
         ],
         [
-            InlineKeyboardButton("👑 ريتاج", url="https://t.me")
+            InlineKeyboardButton("👑 ريتاج", callback_data="retaj_info")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -42,12 +45,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         parse_mode="Markdown"
     )
 
+# الدالة التقنية لمعالجة ضغطات الأزرار داخلياً بالكامل
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
+    
+    # إنهاء حالة التحميل والتعليق في الزر فوراً
     await query.answer()
 
+    # 1. عند الضغط على زر Y.S (عرض قائمة القنوات كأزرار داخلية تفاعلية)
     if query.data == "ys_list":
-        # قنوات شبكة Y.S مرتبة ومنسقة كأزرار حقيقية تفاعلية
         channels = [
             "@EmpireBoosts", "@ShadowNums", "@iconvx_pro", "@wrdxix", "@cvipx", 
             "@DesignArsenalAssets", "@shaheen_fot", "@DesignArsenalApps", "@DesignArsenalPacks", 
@@ -57,6 +63,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         ys_buttons = []
         for ch in channels:
             clean_ch = ch.replace("@", "").strip()
+            # قنوات YS تفتح كأزرار روابط لتوجيه المستخدم لداخل القناة عند رغبته بالدخول
             ys_buttons.append(InlineKeyboardButton(text=f"📢 {ch}", url=f"https://t.me{clean_ch}"))
         
         ys_keyboard = [ys_buttons[i:i + 2] for i in range(0, len(ys_buttons), 2)]
@@ -69,21 +76,48 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             parse_mode="Markdown"
         )
         
+    # 2. عند الضغط على زر ترند (يعرض الرسالة مع زر دخول تفاعلي)
+    elif query.data == "trend_info":
+        trend_text = (
+            "🏆 **قناة تـرنـد²⁰²٧ للمسابقات والجوائز**\n\n"
+            "تابع القناة الرسمية لتكون أول المشاركين والفائزين بالعروض الحصرية:\n👉 @fi1_oo"
+        )
+        trend_keyboard = [[InlineKeyboardButton("🚀 دخول قناة التريند", url="https://t.mefi1_oo")]]
+        await query.message.reply_text(text=trend_text, reply_markup=InlineKeyboardMarkup(trend_keyboard), parse_mode="Markdown")
+        
+    # 3. عند الضغط على زر المطور (يرسل فيديو المطور والبطاقة التعريفية)
     elif query.data == "dev_info":
         dev_text = (
             "👨‍💻 **البطاقة التعريفية لمطور البوت**\n\n"
             "للتواصل، الاستفسار، أو طلب تطوير بوتات خاصة، يمكنك مراسلة المطور عبر حسابه:\n👉 @shaheen_ys"
         )
-        dev_keyboard = [[InlineKeyboardButton("💬 مراسلة المطور الآن", url="https://t.me")]]
-        dev_markup = InlineKeyboardMarkup(dev_keyboard)
-        
+        dev_keyboard = [[InlineKeyboardButton("💬 مراسلة المطور الآن", url="https://t.meshaheen_ys")]]
         await query.message.reply_video(
             video=DEV_VIDEO,
             caption=dev_text,
-            reply_markup=dev_markup,
+            reply_markup=InlineKeyboardMarkup(dev_keyboard),
             parse_mode="Markdown"
         )
+        
+    # 4. عند الضغط على زر الدعم
+    elif query.data == "support_info":
+        support_text = (
+            "🛠️ **قسم الدعم الفني والمساعدة**\n\n"
+            "إذا واجهتك أي مشكلة أو كان لديك اقتراح، تفضل بزيارة قناة الدعم:\n👉 @shaheen_ys"
+        )
+        support_keyboard = [[InlineKeyboardButton("🛠️ دخول قسم الدعم", url="https://t.meshaheen_ys")]]
+        await query.message.reply_text(text=support_text, reply_markup=InlineKeyboardMarkup(support_keyboard), parse_mode="Markdown")
 
+    # 5. عند الضغط على زر ريتاج (يعرض معلومات البوت الآخر مع زر دخوله)
+    elif query.data == "retaj_info":
+        retaj_text = (
+            "👑 **الملكة ريتاج (Ret_QueenBot)**\n\n"
+            "يمكنك الآن الانتقال وتصفح خدمات بوت ريتاج المميزة مباشرة عبر الزر أدناه:"
+        )
+        retaj_keyboard = [[InlineKeyboardButton("🤖 الدخول إلى بوت ريتاج", url="https://t.meRet_QueenBot")]]
+        await query.message.reply_text(text=retaj_text, reply_markup=InlineKeyboardMarkup(retaj_keyboard), parse_mode="Markdown")
+
+    # زر العودة لحذف قائمة القنوات الفرعية وتنظيف الشاشة
     elif query.data == "back_to_main":
         try:
             await query.message.delete()
@@ -92,16 +126,18 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 def main():
     if not TOKEN:
-        print("❌ خطأ: التوكن غير موجود في متغيرات Railway!")
+        print("❌ خطأ: التوكن غير موجود في متغيرات البيئة!")
         return
 
     application = Application.builder().token(TOKEN).build()
+    
+    # تسجيل الأوامر والضغطات برمجياً بالسيرفر
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button_click))
     
-    print("🚀 البوت جاهز ويعمل بالمتغيرات السحابية...")
+    print("🚀 البوت ياسمين جاهز ويعمل بنظام الأزرار الداخلية الكاملة...")
     application.run_polling(close_loop=False)
 
 if __name__ == "__main__":
     main()
-        
+    
